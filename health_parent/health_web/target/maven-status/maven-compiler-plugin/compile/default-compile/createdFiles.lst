@@ -1,8 +1,0 @@
-com\itheima\health\controller\UsernameController.class
-com\itheima\health\security\SpringSecurityUserService.class
-com\itheima\health\controller\CheckGroupController.class
-com\itheima\health\controller\CheckItemController.class
-com\itheima\health\controller\ReportController.class
-com\itheima\health\controller\ReportBusinessController.class
-com\itheima\health\controller\SetmealController.class
-com\itheima\health\controller\OrderSettingControlle.class
