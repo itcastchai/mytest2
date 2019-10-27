@@ -26,9 +26,10 @@ public class SetmealMobileController {
     public Result getSetmeal(){
         try {
             //获取缓存中的数据
-        String setmeals=setmealService.findAll();
+        List<Setmeal>setmealList=setmealService.findAll();
 
-        return new Result(true,MessageConstant.GET_SETMEAL_LIST_SUCCESS,setmeals);
+
+        return new Result(true,MessageConstant.GET_SETMEAL_LIST_SUCCESS,setmealList);
         } catch (Exception e) {
             e.printStackTrace();
             return new Result(false, MessageConstant.GET_SETMEAL_LIST_FAIL);

@@ -9,7 +9,6 @@ import com.itheima.health.entity.Result;
 import com.itheima.health.pojo.CheckGroup;
 import com.itheima.health.service.CheckGroupService;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController

@@ -98,7 +98,7 @@
                         type:'success',
                         message:response.data.message,
                     });
-                    this.setmeal = JSON.parse(response.data.data);
+                    this.setmeal =response.data.data;
                     this.imgUrl = 'http://pzekcjhxc.bkt.clouddn.com/' + this.setmeal.img;
                 }else {
                     this.$message.error(response.data.message)

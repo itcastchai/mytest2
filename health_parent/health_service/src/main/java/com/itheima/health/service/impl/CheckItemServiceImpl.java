@@ -1,5 +1,6 @@
 package com.itheima.health.service.impl;
 import com.alibaba.dubbo.config.annotation.Service;
+import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.itheima.health.dao.CheckItemDao;
@@ -8,8 +9,11 @@ import com.itheima.health.pojo.CheckItem;
 import com.itheima.health.service.CheckItemService ;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
+import redis.clients.jedis.JedisPool;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Service(interfaceClass= CheckItemService.class)
 @Transactional
@@ -17,6 +21,8 @@ public class CheckItemServiceImpl implements CheckItemService {
 
     @Autowired
     CheckItemDao checkItemDao;
+    @Autowired
+    private JedisPool jedisPool;
     @Override
     public void add(CheckItem checkItem) {
 
@@ -54,6 +60,31 @@ public class CheckItemServiceImpl implements CheckItemService {
 
     @Override
     public List<CheckItem> findAll() {
-         return checkItemDao.findAll();
+
+        List<CheckItem>list=new ArrayList<>();
+
+        //1.获取缓存中所有数据
+        Set<String> keys = jedisPool.getResource().keys("checkItems*");
+        if (keys==null||keys.size()==0){
+            List<CheckItem>checkItemList=checkItemDao.findAll();
+            for (CheckItem checkItem :checkItemList) {
+                String  checkItems= JSONObject.toJSONString(checkItem);
+                jedisPool.getResource().set("checkItems"+checkItem.getId(),checkItems);
+               CheckItem checkItem1 = JSONObject.parseObject(checkItems, CheckItem.class);
+                list.add(checkItem1);
+
+            }
+        }else {
+            //若缓存中不为空则从缓存中获取数据
+            for (String key : keys) {
+
+                String s = jedisPool.getResource().get(key);
+               CheckItem checkItem  = JSONObject.parseObject(s, CheckItem.class);
+                list.add( checkItem);
+
+            }
+        }
+
+        return  list;
     }
 }

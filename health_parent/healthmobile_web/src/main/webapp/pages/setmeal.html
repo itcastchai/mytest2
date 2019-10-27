@@ -57,7 +57,7 @@
                 if(response.data.flag){
                     //得到的是字符串（格式是json，但类型是字符串，而不是json对象）
 
-                    this.setmealList = JSON.parse(response.data.data);
+                    this.setmealList =response.data.data;
 
                     this.$message({
                         type:'success',

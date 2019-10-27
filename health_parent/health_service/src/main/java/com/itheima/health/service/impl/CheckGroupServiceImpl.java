@@ -2,6 +2,7 @@ package com.itheima.health.service.impl;
 
 import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.dubbo.container.page.PageHandler;
+import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.itheima.health.dao.CheckGroupDao;
@@ -10,12 +11,16 @@ import com.itheima.health.entity.PageResult;
 import com.itheima.health.entity.QueryPageBean;
 import com.itheima.health.entity.Result;
 import com.itheima.health.pojo.CheckGroup;
+import com.itheima.health.pojo.Setmeal;
 import com.itheima.health.service.CheckGroupService;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
+import redis.clients.jedis.JedisPool;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Service(interfaceClass = CheckGroupService.class)
 @Transactional
@@ -23,6 +28,8 @@ public class CheckGroupServiceImpl implements CheckGroupService {
 
    @Autowired
    private CheckGroupDao checkGroupDao;
+   @Autowired
+   private JedisPool jedisPool;
 
 
     //新增
@@ -93,7 +100,32 @@ public class CheckGroupServiceImpl implements CheckGroupService {
 
     @Override
     public List<CheckGroup> findAll() {
-        return checkGroupDao.findAll();
+
+        List<CheckGroup>list=new ArrayList<>();
+
+        //1.获取缓存中所有数据
+        Set<String> keys = jedisPool.getResource().keys("CheckGroups*");
+        if (keys==null||keys.size()==0){
+            List<CheckGroup>checkGroupList=checkGroupDao.findAll();
+            for (CheckGroup checkGroup : checkGroupList) {
+                String checkGroups= JSONObject.toJSONString(checkGroup);
+                jedisPool.getResource().set("checkGroups"+checkGroup.getId(),checkGroups);
+                CheckGroup checkGroup1 = JSONObject.parseObject(checkGroups, CheckGroup.class);
+                list.add(checkGroup1);
+
+            }
+        }else {
+            //若缓存中不为空则从缓存中获取数据
+            for (String key : keys) {
+
+                String s = jedisPool.getResource().get(key);
+                CheckGroup checkGroup = JSONObject.parseObject(s, CheckGroup.class);
+                list.add(checkGroup);
+
+            }
+        }
+
+        return  list;
     }
 
     public void resetting( Integer checkGroupId, Integer[] checkitemIds){

@@ -19,7 +19,7 @@ public interface SetmealService {
 
     void handleDelete(Integer id);
 
-    String findAll();
+    List<Setmeal>findAll();
 
     String findByIdSetmeal(Integer id);
 }

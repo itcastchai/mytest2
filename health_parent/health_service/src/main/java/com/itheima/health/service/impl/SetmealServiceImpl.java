@@ -18,7 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Service(interfaceClass = SetmealService.class)
 @Transactional
@@ -130,30 +132,40 @@ public class SetmealServiceImpl implements SetmealService {
         }else {
             setmealDao.handleDelete(id);
 
+
         }
        
 
     }
 //查询所有套餐
     @Override
-    public String  findAll(){
-        //获取缓存
-        String setmeals =jedisPool.getResource().get("setmeals");
+    public List<Setmeal> findAll(){
 
-        if (setmeals==null||"".equals(setmeals)) {
+      List<Setmeal>list=new ArrayList<>();
 
+      //1.获取缓存中所有数据
+        Set<String> keys = jedisPool.getResource().keys("setemals*");
+        if (keys==null||keys.size()==0){
             List<Setmeal>setmealList=setmealDao.findAll();
-            if (setmealList!=null&&setmealList.size()>0) {
-                setmeals= JSONObject.toJSONString(setmealList);
-                jedisPool.getResource().sadd("setmeals",setmeals);
-            }else {
-                return null;
-            }
+               for (Setmeal setmeal : setmealList) {
+            String   setmeals= JSONObject.toJSONString(setmeal);
+            jedisPool.getResource().set("setemals"+setmeal.getId(),setmeals);
+            Setmeal setmeall = JSONObject.parseObject(setmeals, Setmeal.class);
+            list.add(setmeall);
 
         }
+        }else {
+            //若缓存中不为空则从缓存中获取数据
+            for (String key : keys) {
 
+                String s = jedisPool.getResource().get(key);
+                Setmeal setmeal = JSONObject.parseObject(s, Setmeal.class);
+                list.add(setmeal);
 
-        return  setmeals ;
+            }
+        }
+
+        return  list;
 
 
     }
@@ -170,7 +182,7 @@ public class SetmealServiceImpl implements SetmealService {
             setmeal=setmealDao.findByIdSetmeal(id);
             if (setmeal!=null&&setmeal.length()>0) {
                 setmeal= JSONObject.toJSONString(setmeal);
-                jedisPool.getResource().sadd("setmeal",setmeal);
+                jedisPool.getResource().sadd("setmeal" ,setmeal);
             }else {
                 return null;
             }

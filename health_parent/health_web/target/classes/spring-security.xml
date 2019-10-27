@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                  http://www.springframework.org/schema/beans/spring-beans.xsd
+                  http://www.springframework.org/schema/mvc
+                  http://www.springframework.org/schema/mvc/spring-mvc.xsd
+                  http://code.alibabatech.com/schema/dubbo
+                  http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+                  http://www.springframework.org/schema/context
+                  http://www.springframework.org/schema/context/spring-context.xsd
+                          http://www.springframework.org/schema/security
+                          http://www.springframework.org/schema/security/spring-security.xsd">
+
+
+
+
+
+    <!--1：定义哪些链接可以放行-->
+    <!--
+      http：用于定义相关权限控制
+      指定哪些资源不需要进行权限校验，可以使用通配符
+    -->
+    <security:http security="none" pattern="/js/**" />
+    <security:http security="none" pattern="/css/**" />
+    <security:http security="none" pattern="/img/**" />
+    <security:http security="none" pattern="/plugins/**" />
+    <!--2：定义哪些链接不可以放行，即需要有角色、权限才可以放行-->
+    <!--security:http：配置url
+            auto-config="true"：自动配置，SpringSecurity内置登录页面，提供登录页面访问的登录、退出的默认url
+            use-expressions="true"：使用表达式，在security:intercept-url标签中的access属性中，使用表达式(hasRole()..)
+        security:intercept-url：表示定义的url
+            pattern="/**"：表示所有的请求资源
+            access=""：表示访问的角色、权限
+    -->
+    <security:http auto-config="true" use-expressions="true">
+
+
+
+        <!--4：设置在页面可以通过iframe访问受保护的页面，默认为不允许访问，
+              需要添加security:frame-options policy="SAMEORIGIN"-->
+        <security:headers>
+            <security:frame-options policy="SAMEORIGIN"></security:frame-options>
+        </security:headers>
+
+        <!--
+                 intercept-url：定义一个拦截规则
+                 pattern：对哪些url进行权限控制
+                 access：在请求对应的URL时需要什么权限，默认配置时它应该是一个以逗号分隔的角色列表，请求的用户只需拥有其中的一个角色就能成功访问对应的URL
+                 isAuthenticated()：已经经过认证（不是匿名用户）
+             -->
+        <!--4.只要认证通过就可以访问-->
+        <security:intercept-url pattern="/pages/**"  access="isAuthenticated()" />
+
+
+        <!--5登录配置：表单登录页面的信息配置
+              login-page="/login.html"：指定登录页面
+              username-parameter="username"：指定登录页面的用户名的参数名称（默认：username）
+              password-parameter="password"：指定登录页面的密码的参数名称（默认：password）
+              login-processing-url="/login.do"：登录页面访问登录的url地址
+              default-target-url="/index.html"：登录成功后访问的成功页面
+              authentication-failure-url="/login.html"：登录失败后跳转的页面
+              always-use-default-target="true"：是否始终跳转到登录成功页面（/index.html）
+          -->
+        <security:form-login login-page="/login.html"
+                             username-parameter="username"
+                             password-parameter="password"
+                             login-processing-url="/login.do"
+                             default-target-url="/pages/main.html"
+                             authentication-failure-url="/login.html"
+                             always-use-default-target="true"
+        />
+        <!--6.
+  logout：退出登录
+  logout-url：退出登录操作对应的请求路径
+  logout-success-url：退出登录后的跳转页面
+-->
+        <security:logout logout-url="/logout.do"
+                         logout-success-url="/login.html" invalidate-session="true"/>
+
+
+
+        <!--7.
+  csrf：对应CsrfFilter过滤器
+   disabled：是否启用CsrfFilter过滤器，如果使用自定义登录页面需要关闭此项，否则登录操作会被禁用（403）
+-->
+        <security:csrf disabled="true"/>
+
+
+    </security:http>
+
+
+
+    <!--
+  8：认证管理，定义登录账号名和密码，并授予访问的角色、权限
+    authentication-manager：认证管理器，用于处理认证操作
+-->
+    <security:authentication-manager>
+        <!--
+            authentication-provider：认证提供者，执行具体的认证逻辑
+        -->
+        <security:authentication-provider user-service-ref="springSecurityUserService">
+
+<!--       9. 指定密码加密策略-->
+            <security:password-encoder ref="passwordEncoder"/>
+
+        </security:authentication-provider>
+
+    </security:authentication-manager>
+    <!--10.配置密码加密对象-->
+    <bean id="passwordEncoder"
+          class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" />
+
+ <bean id="springSecurityUserService" class="com.itheima.health.security.SpringSecurityUserService"/>
+
+    <!--11.开启注解方式权限控制-->
+    <security:global-method-security pre-post-annotations="enabled" />
+
+
+</beans>
